@@ -1,0 +1,10 @@
+# vim: sts=2 ts=2 sw=2 et ai
+{% macro get_environment(docker) -%}
+- DB_TYPE: '{{ docker.database.type }}'
+- DB_NAME: '{{ docker.database.name }}'
+- DB_USER: '{{ docker.database.user }}'
+- DB_PASS: '{{ docker.database.password }}'
+{% if 'publish' in docker %}
+- REDMINE_PORT: '{{ docker.publish }}'
+{% endif %}
+{% endmacro %}

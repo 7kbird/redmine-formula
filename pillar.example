@@ -1,0 +1,31 @@
+{% set db_docker_name = 'default' %}
+{% set db_name = 'redmine' %}
+{% set db_user = 'redmine' %}
+{% set db_pass = 'pass' %}
+
+postgres:
+  dockers:
+    {{ db_docker_name }}:
+      databases:
+        {{ db_name }}:
+          encoding: 'UTF8'
+          owner: '{{ db_user }}'
+          user: '{{ db_user }}'
+          template: 'template0'
+      users:
+        {{ db_user }}:
+          password: '{{ db_pass }}'
+      acls:
+      - ['local', '{{ db_name }}', '{{ db_user }}']
+
+redmine:
+  dockers:
+    redmine:
+      database:
+        type: postgresql
+        name: {{ db_name }}
+        user: {{ db_user }}
+        password: {{ db_pass }}
+        link: {{ db_docker_name }}
+      publish: '8080'
+      data_dir: '/srv/docker/redmine/redmine'
