@@ -41,5 +41,5 @@ redmine-docker-running_{{ docker_name }}:
 redmine-docker-image_{{ image }}:
   cmd.run:
     - name: docker pull {{ image }}
-    - unless: '[ $(docker images -q {{ image }} ]'
+    - unless: '[ $(docker images -q {{ image }}) ]'
 {% endfor %}
