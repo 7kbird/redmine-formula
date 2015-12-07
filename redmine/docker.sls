@@ -1,21 +1,20 @@
 {% import_yaml "redmine/defaults.yaml" as defaults  %}
 {% from "redmine/map.jinja" import get_environment with context %}
 
+{% set images = [] %}
+
 {% for docker_name in salt['pillar.get']('redmine:dockers', {}) %}
 {% set docker = salt['pillar.get']('redmine:dockers:' ~ docker_name,
                                   default=defaults.docker, merge=True) %}
-{% do docker.environment.extend([{'REDMINE_PORT': docker.port},
-                                 {'DB_TYPE': docker.database.type},
-                                 {'DB_NAME': docker.database.name},
-                                 {'DB_USER': docker.database.user},
-                                 {'DB_PASS': docker.database.password}]) %}
 {% set links = [] %}
 {% do links.append(docker.database.link ~ ':postgresql') if 'link' in docker.database %}
+{% set image = docker.image if ':' in docker.image else docker.image ~ ':latest'%}
+{% do images.append(image) if image not in images%}
 
 redmine-docker-running_{{ docker_name }}:
   dockerng.running:
     - name: {{ docker_name }}
-    - image: {{ docker.image }}
+    - image: {{ image }}
     - ports:
       - {{ docker.docker_http_port }}
       - {{ docker.docker_https_port }}
@@ -33,5 +32,14 @@ redmine-docker-running_{{ docker_name }}:
     {%   endif %}
     {% endif %}
     - binds: {{ docker.data_dir }}:{{ docker.docker_data_dir}}
+    - require:
+      - cmd: redmine-docker-image_{{ image }}
 
+{% endfor %}
+
+{% for image in images %}
+redmine-docker-image_{{ image }}:
+  cmd.run:
+    - name: docker pull {{ image }}
+    - unless: '[ $(docker images -q {{ image }} ]'
 {% endfor %}
