@@ -8,8 +8,8 @@
                                   default=defaults.docker, merge=True) %}
 {% set links = [] %}
 {% do links.append(docker.database.link ~ ':postgresql') if 'link' in docker.database %}
-{% set image = docker.image if ':' in docker.image else docker.image ~ ':latest'%}
-{% do images.append(image) if image not in images%}
+{% set image = docker.image if ':' in docker.image else docker.image ~ ':latest' %}
+{% do images.append(image) if image not in images %}
 
 redmine-docker-running_{{ docker_name }}:
   dockerng.running:
@@ -37,7 +37,7 @@ redmine-docker-running_{{ docker_name }}:
 
 {% if 'certs' in docker %}
   {% set certs = { 'redmine.key':docker.certs.key, 'redmine.crt':docker.certs.crt} %}
-  {% do certs.update({'dhparam.pem':docker.certs.pem}) if 'pem' in docker.certs %}
+  {% do certs.update({'dhparam.pem':docker.certs.dhparam }) if 'dhparam' in docker.certs %}
   {% for cert_name, cert in certs.items() %}
 redmine-docker-{{ docker_name}}-certs_{{ cert_name }}:
   file.copy:
