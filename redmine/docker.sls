@@ -35,6 +35,23 @@ redmine-docker-running_{{ docker_name }}:
     - require:
       - cmd: redmine-docker-image_{{ image }}
 
+{% if 'certs' in docker %}
+  {% set certs = { 'redmine.key':docker.certs.key, 'redmine.crt':docker.certs.crt} %}
+  {% do certs.update({'dhparam.pem':docker.certs.pem}) if 'pem' in docker.certs %}
+  {% for cert_name, cert in certs.items() %}
+redmine-docker-{{ docker_name}}-certs_{{ cert_name }}:
+  file.copy:
+    - name: {{ cert.get('path', docker.data_dir ~ '/certs/' ~  cert_name) }}
+    - source: {{ cert.source }}
+    - makedirs: True
+    - force: True
+    - mode: 400   # read only
+    - watch_in:
+      - dockerng: {{ docker_name }}
+
+  {% endfor %}
+{% endif %}
+
 {% endfor %}
 
 {% for image in images %}

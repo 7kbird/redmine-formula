@@ -7,4 +7,5 @@
 {% if 'publish' in docker %}
 - REDMINE_PORT: '{{ docker.publish }}'
 {% endif %}
+- REDMINE_HTTPS: '{{ docker.https|string|lower }}'
 {% endmacro %}
