@@ -52,6 +52,27 @@ redmine-docker-{{ docker_name}}-certs_{{ cert_name }}:
   {% endfor %}
 {% endif %}
 
+{% if 'themes' in docker %}
+{{ docker.data_dir }}/themes:
+  file.directory:
+    - makedirs: True
+{% endif %}
+
+{% for theme_name, theme in docker.get('themes', {}).items() %}
+{% if 'archive' in theme %}
+redmine-docker_{{ docker_name }}_theme_{{ theme_name }}:
+  archive.extracted:
+    - name: {{ docker.data_dir }}/themes/{{ theme_name }}
+    - source: {{ theme.archive.source }}
+    - source_hash: {{ theme.archive.hash }}
+    - archive_format: {{ theme.archive.format }}
+    - require:
+      - file: {{ docker.data_dir }}/themes
+    - watch_in:
+      - dockerng: {{ docker_name }}
+{% endif %}
+{% endfor %}
+
 {% endfor %}
 
 {% for image in images %}
