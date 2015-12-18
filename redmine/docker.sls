@@ -66,10 +66,14 @@ redmine-docker_{{ docker_name }}_theme_{{ theme_name }}:
     - source: {{ theme.archive.source }}
     - source_hash: {{ theme.archive.hash }}
     - archive_format: {{ theme.archive.format }}
+    {% if 'strip' in theme.archive %}
+    - tar_options: --strip={{ theme.archive.strip }}
+    {% endif %}
     - require:
       - file: {{ docker.data_dir }}/themes
     - watch_in:
       - dockerng: {{ docker_name }}
+    - if_missing: {{ docker.data_dir }}/themes/{{ theme_name }}/stylesheets/application.css
 {% endif %}
 {% endfor %}
 
