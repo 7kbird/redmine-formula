@@ -31,7 +31,11 @@ redmine-docker-running_{{ docker_name }}:
     - port_bindings: {{ docker.publish }}:{{ docker.docker_http_port }}
     {%   endif %}
     {% endif %}
-    - binds: {{ docker.data_dir }}:{{ docker.docker_data_dir}}
+    - binds:
+      - {{ docker.data_dir }}:{{ docker.docker_data_dir}}
+      {% for bind in docker.get('binds', []) %}
+      - {{ bind }}
+      {% endfor %}
     - require:
       - cmd: redmine-docker-image_{{ image }}
 
