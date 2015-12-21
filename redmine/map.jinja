@@ -8,4 +8,13 @@
 - REDMINE_PORT: '{{ docker.publish }}'
 {% endif %}
 - REDMINE_HTTPS: '{{ docker.https|string|lower }}'
+{% if 'smtp' in docker %}
+- SMTP_DOMAIN: "{{ docker.smtp.get('domain', docker.smtp.host) }}"
+- SMTP_HOST: "{{ docker.smtp.host }}"
+- SMTP_PORT: "{{ docker.smtp.get('port', 587) }}"
+- SMTP_USER: '{{ docker.smtp.user }}'
+- SMTP_PASS: '{{ docker.smtp.pass }}'
+- SMTP_TLS: "{{ docker.smtp.get('tls', False)|string|lower }}"
+- SMTP_STARTTLS: "{{ docker.smtp.get('starttls', True)|string|lower }}"
+{% endif %}
 {% endmacro %}

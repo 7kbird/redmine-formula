@@ -1,5 +1,5 @@
 docker:
-  image: 'sameersbn/redmine:3.1.1-3'
+  image: 'sameersbn/redmine:3.1.3-1'
   environment: []
   database: {}
   data_dir: '/srv/docker/redmine/redmine'
