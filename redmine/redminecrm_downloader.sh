@@ -4,12 +4,10 @@
 # 
 # Require Environments:
 #
-#   REDMINE_PLUGIN_DIR: redmine plugin root directory
+#   TARGET_DIR: output directory
 #   REDMINECRM_USER: user email for www.redminecrm.com
 #   REDMINECRM_PASS: user password for www.redminecrm.com
-#   PLUGIN_NAME: plugin name, this will be used as folder name in redmine plugin directory
-#   PLUGIN_URL: plugin url get from download page
-#               e.g. "http://www.redminecrm.com/license_manager/zzzz/xxx.zip"
+#   DOWNLOAD_URL: url get from download page e.g. "http://www.redminecrm.com/license_manager/123/xx.zip"
 
 set -e
 set -x
@@ -24,27 +22,26 @@ login_success=$(curl -b "${cookie_file}" -c "${cookie_file}" -F "authenticity_to
 [[ -z "${login_success}" ]] && echo "login failed" && rm -fr ${temp_dir} && return 1
 
 # download with session cookies
-curl -b "${cookie_file}" -o "${PLUGIN_NAME}.zip" "${PLUGIN_URL}"
+curl -b "${cookie_file}" -o "download.zip" "${DOWNLOAD_URL}"
 
-if ! [[ -f "${PLUGIN_NAME}.zip" ]]; then
+if ! [[ -f "download.zip" ]]; then
   rm -fr ${temp_dir}
-  echo "Plugin [${PLUGIN_NAME}] not downloaded from ${PLUGIN_URL}"
+  echo "Cannot download from ${DOWNLOAD_URL}"
   return 2
 fi
 
 # extract and strip if only one directory
-mkdir ${PLUGIN_NAME}_extracted
-cd ${PLUGIN_NAME}_extracted
-unzip ../"${PLUGIN_NAME}.zip"
+mkdir extracted
+cd extracted
+unzip ../download.zip
 
-plugin_dest_dir=${REDMINE_PLUGIN_DIR}/${PLUGIN_NAME}
-mkdir -p ${plugin_dest_dir}
+[[ -d "${TARGET_DIR}" ]] || mkdir -p ${TARGET_DIR}
 
 files=(./*)
 if (( ${#files[@]} == 1 )) && [[ -d "${files[0]}" ]] ; then
-  mv ./*/* ${plugin_dest_dir}/
+  mv ./*/* ${TARGET_DIR}/
 else
-  mv ./* ${plugin_dest_dir}/
+  mv ./* ${TARGET_DIR}/
 fi
 
 rm -fr ${temp_dir}

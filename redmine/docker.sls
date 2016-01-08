@@ -63,10 +63,11 @@ redmine-docker-{{ docker_name}}-certs_{{ cert_name }}:
 {% endif %}
 
 {% for theme_name, theme in docker.get('themes', {}).items() %}
-{% if 'archive' in theme %}
+  {% set redmine_theme_dir = docker.data_dir ~ '/themes/' ~ theme_name %}
+  {% if 'archive' in theme %}
 redmine-docker_{{ docker_name }}_theme_{{ theme_name }}:
   archive.extracted:
-    - name: {{ docker.data_dir }}/themes/{{ theme_name }}
+    - name: {{ redmine_theme_dir }}
     - source: {{ theme.archive.source }}
     - source_hash: {{ theme.archive.hash }}
     - archive_format: {{ theme.archive.format }}
@@ -77,37 +78,48 @@ redmine-docker_{{ docker_name }}_theme_{{ theme_name }}:
       - file: {{ docker.data_dir }}/themes
     - watch_in:
       - dockerng: {{ docker_name }}
-    - if_missing: {{ docker.data_dir }}/themes/{{ theme_name }}/stylesheets/application.css
-{% endif %}
+    - if_missing: {{ redmine_theme_dir }}/stylesheets/application.css
+  {% elif 'redminecrm' in theme %}
+redmine-docker_{{ docker_name }}_redminecrm-theme_{{ theme_name }}:
+  cmd.script:
+    - source: salt://redmine/redminecrm_downloader.sh
+    - env:
+      - REDMINECRM_USER: '{{ docker.redminecrm.user }}'
+      - REDMINECRM_PASS: '{{ docker.redminecrm.pass }}'
+      - DOWNLOAD_URL: '{{ theme.redminecrm.url }}'
+      - TARGET_DIR: '{{ redmine_theme_dir }}'
+    - watch_in:
+      - dockerng: {{ docker_name }}
+    - unless: '[[ -f {{ redmine_theme_dir }}/stylesheets/application.css ]]'
+  {% endif %}
 {% endfor %}
 
-{% set redmine_plugin_dir = docker.data_dir ~ '/plugins' %}
 {% for plugin_name, plugin in docker.get('plugins', {}).items() %}
-{% if 'redminecrm' in plugin %}
+  {% set redmine_plugin_dir = docker.data_dir ~ '/plugins/' ~ plugin_name %}
+  {% if 'redminecrm' in plugin %}
 redmine-docker_{{ docker_name }}_redminecrm-plugin_{{ plugin_name }}:
   cmd.script:
     - source: salt://redmine/redminecrm_downloader.sh
     - env:
       - REDMINECRM_USER: '{{ docker.redminecrm.user }}'
       - REDMINECRM_PASS: '{{ docker.redminecrm.pass }}'
-      - PLUGIN_NAME: '{{ plugin_name }}'
-      - PLUGIN_URL: '{{ plugin.redminecrm.url }}'
-      - REDMINE_PLUGIN_DIR: '{{ redmine_plugin_dir }}'
+      - DOWNLOAD_URL: '{{ plugin.redminecrm.url }}'
+      - TARGET_DIR: '{{ redmine_plugin_dir }}'
     - watch_in:
       - dockerng: {{ docker_name }}
-    - unless: '[[ -f {{ redmine_plugin_dir }}/{{ plugin_name }}/init.rb ]]'
-{% elif 'git' in plugin %}
-redmine-docker_{{ docker_name }}_plugin-_{{ plugin_name }}:
+    - unless: '[[ -f {{ redmine_plugin_dir }}/init.rb ]]'
+  {% elif 'git' in plugin %}
+redmine-docker_{{ docker_name }}_plugin_{{ plugin_name }}:
   git.latest:
     - name: {{ plugin.git.url }}
     - rev: {{ plugin.git.get('rev', 'HEAD') }}
   {% if 'branch' in plugin.git %}
     - branch: {{ plugin.git.branch }}
   {% endif %}
-    - target: {{ redmine_plugin_dir }}/{{ plugin_name }}
+    - target: {{ redmine_plugin_dir }}
     - watch_in:
       - dockerng: {{ docker_name }}
-{% endif %}
+  {% endif %}
 {% endfor %}
 
 {% endfor %}
