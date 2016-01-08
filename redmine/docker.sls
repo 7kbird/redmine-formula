@@ -81,6 +81,35 @@ redmine-docker_{{ docker_name }}_theme_{{ theme_name }}:
 {% endif %}
 {% endfor %}
 
+{% set redmine_plugin_dir = docker.data_dir ~ '/plugins' %}
+{% for plugin_name, plugin in docker.get('plugins', {}).items() %}
+{% if 'redminecrm' in plugin %}
+redmine-docker_{{ docker_name }}_redminecrm-plugin_{{ plugin_name }}:
+  cmd.script:
+    - source: salt://redmine/redminecrm_downloader.sh
+    - env:
+      - REDMINECRM_USER: '{{ docker.redminecrm.user }}'
+      - REDMINECRM_PASS: '{{ docker.redminecrm.pass }}'
+      - PLUGIN_NAME: '{{ plugin_name }}'
+      - PLUGIN_URL: '{{ plugin.redminecrm.url }}'
+      - REDMINE_PLUGIN_DIR: '{{ redmine_plugin_dir }}'
+    - watch_in:
+      - dockerng: {{ docker_name }}
+    - unless: '[[ -f {{ redmine_plugin_dir }}/{{ plugin_name }}/init.rb ]]'
+{% elif 'git' in plugin %}
+redmine-docker_{{ docker_name }}_plugin-_{{ plugin_name }}:
+  git.latest:
+    - name: {{ plugin.git.url }}
+    - rev: {{ plugin.git.get('rev', 'HEAD') }}
+  {% if 'branch' in plugin.git %}
+    - branch: {{ plugin.git.branch }}
+  {% endif %}
+    - target: {{ redmine_plugin_dir }}/{{ plugin_name }}
+    - watch_in:
+      - dockerng: {{ docker_name }}
+{% endif %}
+{% endfor %}
+
 {% endfor %}
 
 {% for image in images %}
